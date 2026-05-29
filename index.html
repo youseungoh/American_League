@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>아메리칸 복식리그 대진표 생성기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* Apple palette */
+  --white:#ffffff;
+  --off:#f5f5f7;
+  --surface:#ffffff;
+  --surface2:rgba(255,255,255,0.72);
+  --stroke:rgba(0,0,0,0.08);
+  --stroke2:rgba(0,0,0,0.12);
+  --tx:#1d1d1f;
+  --tx2:#424245;
+  --tx3:#6e6e73;
+  --tx4:#a1a1a6;
+  --blue:#0071e3;
+  --blue2:#0077ed;
+  --blue-soft:rgba(0,113,227,0.1);
+  --green:#34c759;
+  --red:#ff3b30;
+  --orange:#ff9500;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.05);
+  --shadow:0 4px 16px rgba(0,0,0,0.08),0 1px 4px rgba(0,0,0,0.04);
+  --shadow-lg:0 12px 40px rgba(0,0,0,0.1),0 4px 12px rgba(0,0,0,0.06);
+  --r:12px;--r2:16px;--r3:20px;
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{
+  background:var(--off);color:var(--tx);
+  font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
+  font-weight:400;min-height:100vh;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ═══════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════ */
+.app{max-width:960px;margin:0 auto;padding:0 24px 120px}
+
+/* ═══════════════════════════════════════════
+   HEADER — Apple nav bar feel
+═══════════════════════════════════════════ */
+.hdr{
+  padding:52px 0 40px;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:20px;
+}
+.logo-row{display:flex;align-items:center;gap:14px}
+.logo-icon{
+  width:48px;height:48px;
+  background:linear-gradient(145deg,#1d1d1f 0%,#3a3a3c 100%);
+  border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  color:#ffffff;flex-shrink:0;
+  box-shadow:var(--shadow);
+}
+.logo-title{
+  font-size:22px;font-weight:700;color:var(--tx);
+  letter-spacing:-0.5px;line-height:1.2;
+}
+.logo-sub{
+  font-size:13px;font-weight:400;color:var(--tx3);
+  letter-spacing:0;margin-top:3px;
+}
+.hdr-badge{
+  background:var(--surface);border:1px solid var(--stroke);
+  border-radius:20px;padding:8px 16px;
+  font-size:13px;font-weight:600;color:var(--tx2);
+  box-shadow:var(--shadow-sm);white-space:nowrap;
+  display:flex;align-items:center;gap:7px;
+}
+.hdr-dot{width:8px;height:8px;border-radius:50%;background:var(--tx4)}
+.hdr-dot.live{background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ═══════════════════════════════════════════
+   TABS — Apple segmented control
+═══════════════════════════════════════════ */
+.tab-wrap{
+  background:var(--stroke);border-radius:10px;padding:3px;
+  display:inline-flex;gap:0;margin:0 0 40px;
+}
+.tab{
+  padding:8px 22px;border-radius:8px;font-size:14px;font-weight:600;
+  cursor:pointer;color:var(--tx3);transition:all .2s;
+  display:flex;align-items:center;gap:7px;background:none;border:none;
+  white-space:nowrap;
+}
+.tab svg{width:15px;height:15px;flex-shrink:0;transition:color .2s}
+.tab:hover{color:var(--tx2)}
+.tab.on{
+  background:var(--white);color:var(--tx);
+  box-shadow:0 1px 4px rgba(0,0,0,0.1),0 0 0 0.5px rgba(0,0,0,0.06);
+}
+
+/* ═══════════════════════════════════════════
+   PANELS
+═══════════════════════════════════════════ */
+.panel{display:none;animation:fadeUp .3s ease}
+.panel.on{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══════════════════════════════════════════
+   CARDS (Apple glass-surface)
+═══════════════════════════════════════════ */
+.card{
+  background:var(--white);border-radius:var(--r2);
+  border:1px solid var(--stroke);
+  box-shadow:var(--shadow);
+  margin-bottom:16px;overflow:hidden;
+}
+.card-padded{padding:24px}
+
+/* ═══════════════════════════════════════════
+   SECTION LABELS
+═══════════════════════════════════════════ */
+.slbl{
+  font-size:11px;font-weight:700;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--tx3);
+  margin-bottom:12px;margin-top:28px;
+  display:flex;align-items:center;gap:6px;
+}
+.slbl:first-child{margin-top:0}
+.slbl svg{color:var(--blue)}
+
+/* ═══════════════════════════════════════════
+   SPORT BUTTONS
+═══════════════════════════════════════════ */
+.sport-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sp-btn{
+  background:var(--white);border:1.5px solid var(--stroke2);
+  border-radius:var(--r);padding:20px 8px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:9px;
+  transition:all .18s;
+}
+.sp-btn:hover{border-color:rgba(0,113,227,0.3);background:#fafafa;transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.sp-btn.on{
+  border-color:var(--blue);background:var(--blue-soft);
+  box-shadow:0 0 0 3px rgba(0,113,227,0.12);
+}
+.sp-em{font-size:26px;line-height:1}
+.sp-nm{font-size:13px;font-weight:600;color:var(--tx3)}
+.sp-btn.on .sp-nm{color:var(--blue)}
+
+/* ═══════════════════════════════════════════
+   SELECTOR ROWS
+═══════════════════════════════════════════ */
+.sel-row{display:flex;gap:8px;flex-wrap:wrap}
+.sel-btn{
+  flex:1;padding:11px 6px;background:var(--white);
+  border:1.5px solid var(--stroke2);border-radius:10px;
+  color:var(--tx2);font-size:14px;font-weight:600;cursor:pointer;
+  transition:all .18s;font-family:'Noto Sans KR',sans-serif;text-align:center;
+}
+.sel-btn:hover{border-color:rgba(0,113,227,0.3);background:#fafafa}
+.sel-btn.on{border-color:var(--blue);background:var(--blue-soft);color:var(--blue)}
+.sel-btn.sm{font-size:13px;padding:10px 6px}
+
+/* ═══════════════════════════════════════════
+   DIVIDER
+═══════════════════════════════════════════ */
+.hr{height:1px;background:var(--stroke);margin:28px 0 24px;position:relative}
+.hr::after{content:attr(data-t);position:absolute;top:-9px;left:0;background:var(--off);padding:0 12px 0 0;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--tx4)}
+
+/* ═══════════════════════════════════════════
+   PLAYER INPUTS
+═══════════════════════════════════════════ */
+.p-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.p-row{
+  display:flex;align-items:center;gap:10px;
+  background:var(--white);border:1.5px solid var(--stroke2);
+  border-radius:10px;padding:11px 14px;transition:border-color .2s;
+}
+.p-row:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,113,227,0.12)}
+.p-idx{
+  width:24px;height:24px;border-radius:6px;
+  background:var(--off);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:var(--tx3);flex-shrink:0;
+}
+.p-in{
+  flex:1;background:none;border:none;outline:none;
+  color:var(--tx);font-family:'Noto Sans KR',sans-serif;
+  font-size:15px;font-weight:600;
+}
+.p-in::placeholder{color:var(--tx4)}
+
+/* ═══════════════════════════════════════════
+   GENERATE BUTTON — Apple CTA blue
+═══════════════════════════════════════════ */
+.btn-go{
+  width:100%;padding:17px;
+  background:var(--blue);color:#ffffff;
+  font-family:'Noto Sans KR',sans-serif;
+  font-size:15px;font-weight:700;
+  cursor:pointer;border:none;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:background .2s,transform .15s;
+  border-radius:14px;margin-top:8px;
+  box-shadow:0 4px 20px rgba(0,113,227,0.3);
+}
+.btn-go:hover{background:var(--blue2);transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,113,227,0.35)}
+.btn-go:active{transform:translateY(0)}
+.btn-go svg{width:18px;height:18px}
+
+/* ═══════════════════════════════════════════
+   META BAR
+═══════════════════════════════════════════ */
+.meta-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.pills{display:flex;gap:7px;flex-wrap:wrap}
+.pill{
+  padding:5px 13px;font-size:12px;font-weight:600;
+  border-radius:20px;letter-spacing:.2px;
+}
+.pg{background:rgba(0,113,227,0.1);color:var(--blue)}
+.pd{background:var(--off);color:var(--tx3);border:1px solid var(--stroke2)}
+
+.btn-print{
+  display:flex;align-items:center;gap:7px;
+  padding:9px 18px;background:var(--white);border:1.5px solid var(--stroke2);
+  color:var(--tx2);font-size:13px;font-weight:600;
+  cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+  transition:all .2s;border-radius:10px;
+  box-shadow:var(--shadow-sm);
+}
+.btn-print:hover{border-color:var(--blue);color:var(--blue);background:#fafcff}
+.btn-print svg{width:15px;height:15px}
+
+.btn-print-blue{
+  display:flex;align-items:center;gap:7px;
+  padding:9px 18px;background:var(--blue);border:none;
+  color:#fff;font-size:13px;font-weight:600;
+  cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+  transition:all .2s;border-radius:10px;
+  box-shadow:0 2px 10px rgba(0,113,227,0.25);
+}
+.btn-print-blue:hover{background:var(--blue2);box-shadow:0 4px 14px rgba(0,113,227,0.3)}
+.btn-print-blue svg{width:15px;height:15px}
+
+/* ═══════════════════════════════════════════
+   MATCH CARDS
+═══════════════════════════════════════════ */
+.rg{margin-bottom:20px}
+.rl{
+  font-size:12px;font-weight:700;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--tx4);
+  margin-bottom:12px;display:flex;align-items:center;gap:10px;
+}
+.rl::after{content:'';flex:1;height:1px;background:var(--stroke)}
+
+.mc{
+  background:var(--white);border:1px solid var(--stroke);
+  border-radius:var(--r2);overflow:hidden;
+  box-shadow:var(--shadow-sm);margin-bottom:10px;
+  transition:box-shadow .2s;
+}
+.mc:hover{box-shadow:var(--shadow)}
+
+.mc-body{display:grid;grid-template-columns:1fr 62px 1fr;align-items:stretch}
+
+.ts{padding:18px 20px;display:flex;align-items:center;gap:13px;transition:background .2s}
+.ts.r{flex-direction:row-reverse;text-align:right}
+.ts.win{background:rgba(0,113,227,0.04)}
+
+.av{
+  width:40px;height:40px;flex-shrink:0;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;color:#fff;
+}
+.tn{font-size:16px;font-weight:600;color:var(--tx);line-height:1.2}
+.tp{font-size:12px;font-weight:500;color:var(--tx4);margin-top:3px}
+.ts.win .tn{color:var(--blue)}
+
+.vs-c{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-left:1px solid var(--stroke);border-right:1px solid var(--stroke);
+  gap:3px;
+}
+.vs-t{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--tx4)}
+.ct-t{font-size:10px;font-weight:600;color:var(--tx4);letter-spacing:1px}
+
+.sc-row{
+  border-top:1px solid var(--stroke);
+  display:grid;grid-template-columns:1fr 62px 1fr;
+  background:var(--off);
+}
+.sc-s{display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 16px}
+.sc-btn{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--white);border:1.5px solid var(--stroke2);
+  cursor:pointer;color:var(--tx2);font-size:18px;font-weight:300;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;line-height:1;
+  font-family:-apple-system,sans-serif;
+  box-shadow:var(--shadow-sm);
+}
+.sc-btn:hover{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(0,113,227,0.3)}
+.sc-v{
+  font-size:30px;font-weight:700;color:var(--tx);
+  min-width:36px;text-align:center;letter-spacing:-1px;
+  font-variant-numeric:tabular-nums;transition:color .2s;
+}
+.sc-v.win{color:var(--blue)}
+.sc-sep{font-size:13px;font-weight:500;color:var(--tx4);display:flex;align-items:center}
+
+.rest-bar{
+  border-top:1px solid var(--stroke);background:var(--off);
+  padding:9px 20px;display:flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:600;color:var(--tx3);
+}
+.rest-bar svg{flex-shrink:0;color:var(--tx4)}
+
+/* ═══════════════════════════════════════════
+   PROGRESS
+═══════════════════════════════════════════ */
+.prog{
+  background:var(--white);border:1px solid var(--stroke);
+  border-radius:var(--r2);padding:20px 24px;
+  box-shadow:var(--shadow-sm);margin-top:8px;
+}
+.prog-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.prog-title{font-size:14px;font-weight:600;color:var(--tx2);display:flex;align-items:center;gap:7px}
+.prog-title svg{color:var(--blue)}
+.prog-pct{font-size:14px;font-weight:700;color:var(--blue)}
+.prog-tr{height:6px;background:var(--stroke);border-radius:3px;overflow:hidden}
+.prog-br{height:100%;background:linear-gradient(90deg,var(--blue),#34aadc);border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.prog-label{font-size:12px;font-weight:500;color:var(--tx4);margin-top:8px}
+
+/* ═══════════════════════════════════════════
+   STANDINGS
+═══════════════════════════════════════════ */
+.st-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.st-title{font-size:16px;font-weight:700;color:var(--tx);display:flex;align-items:center;gap:9px}
+.st-title svg{color:var(--orange)}
+
+.win-banner{
+  background:linear-gradient(135deg,#fff9f0 0%,#fffdf5 100%);
+  border:1.5px solid rgba(255,149,0,0.25);
+  border-radius:var(--r2);
+  padding:22px 28px;margin-bottom:20px;
+  display:flex;align-items:center;gap:18px;
+  animation:fadeUp .4s ease;
+  box-shadow:0 4px 20px rgba(255,149,0,0.1);
+}
+.win-icon{color:var(--orange)}
+.win-lbl{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--orange);margin-bottom:4px;opacity:.8}
+.win-name{font-size:24px;font-weight:700;color:var(--tx);letter-spacing:-0.5px}
+
+.tbl-wrap{
+  background:var(--white);border:1px solid var(--stroke);
+  border-radius:var(--r2);overflow:hidden;box-shadow:var(--shadow-sm);
+}
+.st-tbl{width:100%;border-collapse:collapse}
+.st-tbl thead{background:var(--off)}
+.st-tbl th{
+  font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--tx4);padding:13px 18px;text-align:left;
+  border-bottom:1px solid var(--stroke);
+}
+.st-tbl th:not(:first-child):not(:nth-child(2)){text-align:right}
+.st-tbl td{
+  padding:16px 18px;font-size:15px;font-weight:500;
+  border-bottom:1px solid var(--stroke);color:var(--tx);
+}
+.st-tbl tr:last-child td{border-bottom:none}
+.st-tbl tbody tr:hover td{background:#fafafa}
+.st-tbl td:not(:first-child):not(:nth-child(2)){text-align:right}
+
+.rk{
+  width:30px;height:30px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;border-radius:8px;
+}
+.rk1{background:linear-gradient(135deg,#ffcc02,#ff9500);color:#fff;box-shadow:0 2px 8px rgba(255,149,0,0.3)}
+.rk2{background:linear-gradient(135deg,#c8c8cc,#98989d);color:#fff}
+.rk3{background:linear-gradient(135deg,#d4894a,#c07530);color:#fff}
+.rk-n{color:var(--tx4);font-size:14px;font-weight:600;padding-left:5px}
+
+.pc{display:flex;align-items:center;gap:11px}
+.td-w{color:var(--green);font-weight:700}
+.td-l{color:var(--red);font-weight:700}
+.td-p{color:var(--blue);font-weight:700}
+.td-n{color:var(--red);font-weight:700}
+
+/* ═══════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════ */
+.footer{
+  margin-top:80px;padding:40px 0 20px;
+  border-top:1px solid var(--stroke);text-align:center;
+}
+.ft-logo{
+  width:36px;height:36px;
+  background:linear-gradient(145deg,#1d1d1f,#3a3a3c);
+  border-radius:9px;margin:0 auto 14px;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+}
+.ft-name{font-size:15px;font-weight:700;color:var(--tx);margin-bottom:6px}
+.ft-copy{font-size:13px;color:var(--tx3)}
+.ft-sub{font-size:12px;color:var(--tx4);margin-top:4px}
+
+/* ═══════════════════════════════════════════
+   PRINT
+═══════════════════════════════════════════ */
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body{background:#f5f5f7!important}
+  .app{padding:0 16px!important}
+  .no-print,.tab-wrap,.hdr-badge,.prog,.meta-bar,.st-hdr .btn-print-blue{display:none!important}
+  .panel{display:block!important;padding:0!important}
+  .panel:not(.print-target){display:none!important}
+  .hdr{padding:20px 0!important}
+  .mc{page-break-inside:avoid!important;box-shadow:none!important;border:1px solid #ddd!important}
+  .sc-btn{display:none!important}
+  .tbl-wrap{box-shadow:none!important;border:1px solid #ddd!important}
+  .print-title{display:block!important;font-size:20px;font-weight:700;color:#1d1d1f;text-align:center;margin:16px 0 6px;letter-spacing:-0.5px}
+  .print-sub{display:block!important;font-size:12px;color:#6e6e73;text-align:center;margin-bottom:20px}
+  .footer{margin-top:24px!important;padding:16px 0!important}
+}
+.print-title,.print-sub{display:none}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+@media(max-width:640px){
+  .app{padding:0 16px 100px}
+  .hdr{padding:32px 0 28px}
+  .logo-title{font-size:18px}
+  .p-grid{grid-template-columns:1fr}
+  .sport-grid{grid-template-columns:repeat(2,1fr)}
+  .mc-body{grid-template-columns:1fr 52px 1fr}
+  .ts{padding:14px 12px;gap:10px}
+  .sc-v{font-size:26px}
+  .tab{padding:8px 14px;font-size:13px}
+  .slbl{margin-top:22px}
+}
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR
+═══════════════════════════════════════════ */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══ HEADER ══ -->
+<div class="hdr">
+  <div class="logo-row">
+    <div class="logo-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+        <path d="M4 22h16"/>
+        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-title">아메리칸 복식리그 대진표 생성기</div>
+      <div class="logo-sub">American Doubles League Bracket Generator</div>
+    </div>
+  </div>
+  <div class="hdr-badge" id="hdrBadge">
+    <div class="hdr-dot" id="hdrDot"></div>
+    <span id="hdrTx">대기중</span>
+  </div>
+</div>
+
+<!-- ══ TABS ══ -->
+<div class="tab-wrap no-print">
+  <button class="tab on" onclick="gTab('Setup',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/>
+      <line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/>
+      <line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/>
+      <line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/>
+      <line x1="16" x2="16" y1="18" y2="22"/>
+    </svg>
+    설정
+  </button>
+  <button class="tab" onclick="gTab('Bracket',this)" id="tBracket">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/>
+      <rect x="9" y="2" width="6" height="6" rx="1"/>
+      <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/>
+    </svg>
+    대진표
+  </button>
+  <button class="tab" onclick="gTab('Standing',this)" id="tStanding">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/>
+      <line x1="6" x2="6" y1="20" y2="14"/>
+    </svg>
+    순위표
+  </button>
+</div>
+
+<!-- ══════════════════════ SETUP ══════════════════════ -->
+<div class="panel on" id="panelSetup">
+  <div class="card card-padded">
+    <div class="slbl">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+      종목 선택
+    </div>
+    <div class="sport-grid">
+      <button class="sp-btn on" data-s="tennis" onclick="pSport(this)"><span class="sp-em">🎾</span><span class="sp-nm">테니스</span></button>
+      <button class="sp-btn" data-s="badminton" onclick="pSport(this)"><span class="sp-em">🏸</span><span class="sp-nm">배드민턴</span></button>
+      <button class="sp-btn" data-s="pingpong" onclick="pSport(this)"><span class="sp-em">🏓</span><span class="sp-nm">탁구</span></button>
+      <button class="sp-btn" data-s="volleyball" onclick="pSport(this)"><span class="sp-em">🏐</span><span class="sp-nm">배구</span></button>
+    </div>
+
+    <div class="slbl">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      참가 인원
+    </div>
+    <div class="sel-row" id="cntRow">
+      <button class="sel-btn" data-n="3" onclick="pCount(this)">3명</button>
+      <button class="sel-btn" data-n="4" onclick="pCount(this)">4명</button>
+      <button class="sel-btn on" data-n="5" onclick="pCount(this)">5명</button>
+      <button class="sel-btn" data-n="6" onclick="pCount(this)">6명</button>
+      <button class="sel-btn" data-n="7" onclick="pCount(this)">7명</button>
+      <button class="sel-btn" data-n="8" onclick="pCount(this)">8명</button>
+      <button class="sel-btn" data-n="9" onclick="pCount(this)">9명</button>
+      <button class="sel-btn" data-n="10" onclick="pCount(this)">10명</button>
+    </div>
+
+    <div class="slbl">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>
+      점수 형식
+    </div>
+    <div class="sel-row">
+      <button class="sel-btn sm on" data-f="free" onclick="pFmt(this)">자유 입력</button>
+      <button class="sel-btn sm" data-f="6" onclick="pFmt(this)">게임 단위 0–6</button>
+      <button class="sel-btn sm" data-f="21" onclick="pFmt(this)">랠리 포인트 0–21</button>
+    </div>
+  </div>
+
+  <div class="card card-padded">
+    <div class="slbl" style="margin-top:0">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      선수 이름 등록
+    </div>
+    <div class="p-grid" id="pGrid"></div>
+  </div>
+
+  <button class="btn-go" onclick="gen()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    대진표 생성하기
+  </button>
+</div>
+
+<!-- ══════════════════════ BRACKET ══════════════════════ -->
+<div class="panel" id="panelBracket">
+  <div class="print-title" id="ptB">아메리칸 복식리그 — 대진표</div>
+  <div class="print-sub" id="psB"></div>
+
+  <div class="meta-bar no-print">
+    <div class="pills">
+      <span class="pill pg" id="pSp">🎾 테니스</span>
+      <span class="pill pd" id="pPl">5명</span>
+      <span class="pill pd" id="pRd">4경기</span>
+    </div>
+    <button class="btn-print" onclick="doPrint('Bracket')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 6 2 18 2 18 9"/>
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+        <rect width="12" height="8" x="6" y="14"/>
+      </svg>
+      인쇄 / PDF 저장
+    </button>
+  </div>
+
+  <div id="mBox"></div>
+
+  <div class="prog no-print" id="progWrap">
+    <div class="prog-h">
+      <div class="prog-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        경기 진행률
+      </div>
+      <div class="prog-pct" id="progPct">0%</div>
+    </div>
+    <div class="prog-tr"><div class="prog-br" id="progBr" style="width:0%"></div></div>
+    <div class="prog-label" id="progLbl">0 / 0 경기 완료</div>
+  </div>
+</div>
+
+<!-- ══════════════════════ STANDING ══════════════════════ -->
+<div class="panel" id="panelStanding">
+  <div class="print-title" id="ptS">아메리칸 복식리그 — 최종 순위표</div>
+  <div class="print-sub" id="psS"></div>
+
+  <div class="st-hdr">
+    <div class="st-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/>
+      </svg>
+      최종 순위표
+    </div>
+    <button class="btn-print-blue no-print" onclick="doPrint('Standing')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 6 2 18 2 18 9"/>
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+        <rect width="12" height="8" x="6" y="14"/>
+      </svg>
+      인쇄 / PDF 저장
+    </button>
+  </div>
+  <div id="wBox"></div>
+  <div class="tbl-wrap">
+    <table class="st-tbl">
+      <thead><tr>
+        <th style="width:48px">순위</th><th>선수</th>
+        <th>승</th><th>패</th><th>득점</th><th>실점</th><th>득실</th><th>승률</th>
+      </tr></thead>
+      <tbody id="stBd"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="ft-logo">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/>
+    </svg>
+  </div>
+  <div class="ft-name">아메리칸 복식리그 대진표 생성기</div>
+  <div class="ft-copy">© Produced by You Seung-oh</div>
+  <div class="ft-sub">American Doubles League Bracket Generator</div>
+</div>
+
+</div><!-- /.app -->
+
+<script>
+/* ──────────────────────────────────
+   STATE
+────────────────────────────────── */
+const S={sport:'tennis',sn:'테니스',se:'🎾',count:5,fmt:'free',players:[],matches:[],scores:{}};
+const SN={tennis:'테니스',badminton:'배드민턴',pingpong:'탁구',volleyball:'배구'};
+const SE={tennis:'🎾',badminton:'🏸',pingpong:'🏓',volleyball:'🏐'};
+const AVC=['#0071e3','#34c759','#ff9500','#ff3b30','#af52de','#5ac8fa','#ff6b6b','#30d158'];
+
+/* ──────────────────────────────────
+   PICKERS
+────────────────────────────────── */
+function pSport(b){
+  document.querySelectorAll('.sp-btn').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');S.sport=b.dataset.s;S.sn=SN[S.sport];S.se=SE[S.sport];
+}
+function pCount(b){
+  document.getElementById('cntRow').querySelectorAll('.sel-btn').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');S.count=parseInt(b.dataset.n);mkInputs();
+}
+function pFmt(b){
+  b.closest('.sel-row').querySelectorAll('.sel-btn').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');S.fmt=b.dataset.f;
+}
+
+/* ──────────────────────────────────
+   PLAYER INPUTS
+────────────────────────────────── */
+const DF=['유승오','김항윤','조재현','양성화','김채균','오하늘','윤소현','강민혁','이준혁','박소연'];
+function mkInputs(){
+  const g=document.getElementById('pGrid');g.innerHTML='';
+  for(let i=0;i<S.count;i++){
+    const d=document.createElement('div');d.className='p-row';
+    d.innerHTML=`<div class="p-idx">${i+1}</div><input class="p-in" id="pf${i}" value="${DF[i]||'선수'+(i+1)}" placeholder="이름 입력">`;
+    g.appendChild(d);
+  }
+}
+
+/* ──────────────────────────────────
+   SCHEDULE — 완전균등 알고리즘
+   모든 선수가 동일한 경기수 보장
+   5명→5경기(각 4경기), 6명→6경기(각 4경기)
+   7명→7경기(각 4경기), 8명→7라운드 2코트
+────────────────────────────────── */
+function mkSched(p){
+  // ── 완전균등 대진표 (3~10명 모두 검증됨) ──
+  // 3명: 단식 3경기 (각 2경기), 4명: 복식 3경기 (각 3경기)
+  // 5~7명: 각 4경기씩, 8~10명: 2코트, 각 7~8경기씩
+  const T={
+    3:[  // 단식 — 1명 쉬고 2명 경기
+      {a:[0],b:[1],r:[2],singles:true},
+      {a:[0],b:[2],r:[1],singles:true},
+      {a:[1],b:[2],r:[0],singles:true},
+    ],
+    4:[  // 복식 3경기, 모두 3경기
+      {a:[0,1],b:[2,3],r:[]},
+      {a:[0,2],b:[1,3],r:[]},
+      {a:[0,3],b:[1,2],r:[]},
+    ],
+    5:[  // 5경기, 모두 4경기
+      {a:[1,2],b:[3,4],r:[0]},
+      {a:[0,3],b:[2,4],r:[1]},
+      {a:[0,4],b:[1,3],r:[2]},
+      {a:[0,2],b:[1,4],r:[3]},
+      {a:[0,1],b:[2,3],r:[4]},
+    ],
+    6:[  // 6경기, 모두 4경기
+      {a:[0,1],b:[2,3],r:[4,5]},
+      {a:[0,4],b:[1,5],r:[2,3]},
+      {a:[2,4],b:[3,5],r:[0,1]},
+      {a:[1,2],b:[4,5],r:[0,3]},
+      {a:[0,5],b:[1,3],r:[2,4]},
+      {a:[0,2],b:[3,4],r:[1,5]},
+    ],
+    7:[  // 7경기, 모두 4경기
+      {a:[0,3],b:[4,5],r:[1,2,6]},
+      {a:[1,4],b:[5,6],r:[0,2,3]},
+      {a:[2,5],b:[0,6],r:[1,3,4]},
+      {a:[3,6],b:[0,1],r:[2,4,5]},
+      {a:[0,4],b:[1,2],r:[3,5,6]},
+      {a:[1,5],b:[2,3],r:[0,4,6]},
+      {a:[2,6],b:[3,4],r:[0,1,5]},
+    ],
+    8:[  // 2코트 7라운드, 모두 7경기
+      {a:[0,1],b:[2,3],c:[4,5],d:[6,7],r:[]},
+      {a:[0,2],b:[1,4],c:[3,6],d:[5,7],r:[]},
+      {a:[0,3],b:[1,5],c:[2,6],d:[4,7],r:[]},
+      {a:[0,4],b:[1,6],c:[2,7],d:[3,5],r:[]},
+      {a:[0,5],b:[1,7],c:[2,4],d:[3,6],r:[]},
+      {a:[0,6],b:[1,3],c:[2,5],d:[4,7],r:[]},
+      {a:[0,7],b:[1,2],c:[3,4],d:[5,6],r:[]},
+    ],
+    9:[  // 2코트 9라운드, 모두 8경기
+      {a:[1,2],b:[3,4],c:[5,6],d:[7,8],r:[0]},
+      {a:[0,3],b:[2,5],c:[4,7],d:[6,8],r:[1]},
+      {a:[0,4],b:[1,6],c:[3,7],d:[5,8],r:[2]},
+      {a:[0,5],b:[1,7],c:[2,8],d:[4,6],r:[3]},
+      {a:[0,6],b:[1,8],c:[2,5],d:[3,7],r:[4]},
+      {a:[0,7],b:[1,3],c:[2,6],d:[4,8],r:[5]},
+      {a:[0,8],b:[1,2],c:[3,4],d:[5,7],r:[6]},
+      {a:[0,1],b:[2,3],c:[4,5],d:[6,8],r:[7]},
+      {a:[0,2],b:[1,4],c:[3,6],d:[5,7],r:[8]},
+    ],
+    10:[ // 2코트 10라운드, 모두 8경기
+      {a:[1,2],b:[3,4],c:[6,7],d:[8,9],r:[0,5]},
+      {a:[0,3],b:[2,5],c:[4,8],d:[7,9],r:[1,6]},
+      {a:[0,4],b:[1,6],c:[3,8],d:[5,9],r:[2,7]},
+      {a:[0,5],b:[1,7],c:[2,9],d:[4,6],r:[3,8]},
+      {a:[0,6],b:[1,8],c:[2,5],d:[3,7],r:[4,9]},
+      {a:[1,8],b:[2,4],c:[3,7],d:[5,9],r:[0,6]},
+      {a:[0,9],b:[2,3],c:[4,5],d:[6,8],r:[1,7]},
+      {a:[0,1],b:[3,4],c:[5,6],d:[7,9],r:[2,8]},
+      {a:[0,2],b:[1,5],c:[4,7],d:[6,8],r:[3,9]},
+      {a:[0,3],b:[1,7],c:[2,8],d:[6,9],r:[4,5]},
+    ],
+  };
+  const ms=[];let id=0;
+  (T[p.length]||T[5]).forEach((m,ri)=>{
+    if(m.singles){
+      // 3명 단식 처리
+      ms.push({id:id++,t1:[p[m.a[0]]],t2:[p[m.b[0]]],rest:m.r.map(i=>p[i]),singles:true});
+    } else if(m.c){
+      ms.push({id:id++,t1:[p[m.a[0]],p[m.a[1]]],t2:[p[m.b[0]],p[m.b[1]]],rest:[],round:ri,court:1});
+      ms.push({id:id++,t1:[p[m.c[0]],p[m.c[1]]],t2:[p[m.d[0]],p[m.d[1]]],rest:(m.r||[]).map(i=>p[i]),round:ri,court:2});
+    } else {
+      ms.push({id:id++,t1:[p[m.a[0]],p[m.a[1]]],t2:[p[m.b[0]],p[m.b[1]]],rest:(m.r||[]).map(i=>p[i])});
+    }
+  });
+  return ms;
+}
+
+/* ──────────────────────────────────
+   GENERATE
+────────────────────────────────── */
+function gen(){
+  S.players=[];
+  for(let i=0;i<S.count;i++) S.players.push(document.getElementById('pf'+i).value.trim()||`선수${i+1}`);
+  S.matches=mkSched(S.players);
+  S.scores={};S.matches.forEach(m=>{S.scores[m.id]={a:0,b:0}});
+  const dot=document.getElementById('hdrDot');
+  dot.className='hdr-dot live';
+  document.getElementById('hdrTx').textContent=S.se+' '+S.sn+' · '+S.count+'명';
+  document.getElementById('pSp').textContent=S.se+' '+S.sn;
+  document.getElementById('pPl').textContent='선수 '+S.count+'명';
+  document.getElementById('pRd').textContent='총 '+S.matches.length+'경기';
+  document.getElementById('ptB').textContent='아메리칸 복식리그 대진표 생성기 — 대진표';
+  document.getElementById('psB').textContent=S.se+' '+S.sn+' · '+S.count+'명 · '+S.matches.length+'경기';
+  document.getElementById('ptS').textContent='아메리칸 복식리그 대진표 생성기 — 최종 순위표';
+  document.getElementById('psS').textContent=S.se+' '+S.sn+' · '+S.count+'명 참가';
+  mkBracket();mkStanding();
+  gTab('Bracket',document.getElementById('tBracket'));
+}
+
+/* ──────────────────────────────────
+   HELPERS
+────────────────────────────────── */
+function gc(i){return AVC[i%AVC.length]}
+function pi(n){return S.players.indexOf(n)}
+
+/* ──────────────────────────────────
+   BRACKET
+────────────────────────────────── */
+function mkBracket(){
+  const box=document.getElementById('mBox');box.innerHTML='';
+  const seen=new Set();let gi=0;
+  S.matches.forEach((m,idx)=>{
+    if(m.round!==undefined&&seen.has(m.round)) return;
+    if(m.round!==undefined) seen.add(m.round);
+    const lbl=m.round!==undefined?`라운드 ${m.round+1}`:`${idx+1}경기`;
+    const batch=m.round!==undefined?S.matches.filter(x=>x.round===m.round):[m];
+    const g=document.createElement('div');g.className='rg';
+    g.style.cssText=`animation-delay:${gi*.06}s`;gi++;
+    g.innerHTML=`<div class="rl">${lbl}</div>${batch.map(cHTML).join('')}`;
+    box.appendChild(g);
+  });
+  upProg();
+}
+
+function cHTML(m){
+  const sc=S.scores[m.id];
+  const aW=sc.a>sc.b&&(sc.a>0||sc.b>0),bW=sc.b>sc.a&&(sc.a>0||sc.b>0);
+  const ia=pi(m.t1[0]);
+  const restBar=m.rest&&m.rest.length?`<div class="rest-bar">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>
+    휴식 : ${m.rest.join(' · ')}
+  </div>`:'';
+  const scBtns=`<div class="sc-s">
+      <button class="sc-btn no-print" onclick="adj(${m.id},'a',-1)">−</button>
+      <div class="sc-v${aW?' win':''}" id="sa${m.id}">${sc.a}</div>
+      <button class="sc-btn no-print" onclick="adj(${m.id},'a',1)">+</button>
+    </div>
+    <div class="sc-sep">:</div>
+    <div class="sc-s">
+      <button class="sc-btn no-print" onclick="adj(${m.id},'b',-1)">−</button>
+      <div class="sc-v${bW?' win':''}" id="sb${m.id}">${sc.b}</div>
+      <button class="sc-btn no-print" onclick="adj(${m.id},'b',1)">+</button>
+    </div>`;
+
+  if(m.singles){
+    const ib=pi(m.t2[0]);
+    return `<div class="mc" id="mc${m.id}">
+  <div class="mc-body">
+    <div class="ts${aW?' win':''}" id="ta${m.id}">
+      <div class="av" style="background:${gc(ia)}">${m.t1[0].charAt(0)}</div>
+      <div><div class="tn">${m.t1[0]}</div><div class="tp">단식</div></div>
+    </div>
+    <div class="vs-c"><span class="vs-t">VS</span></div>
+    <div class="ts r${bW?' win':''}" id="tb${m.id}">
+      <div class="av" style="background:${gc(ib)}">${m.t2[0].charAt(0)}</div>
+      <div><div class="tn">${m.t2[0]}</div><div class="tp">단식</div></div>
+    </div>
+  </div>
+  <div class="sc-row">${scBtns}</div>
+  ${restBar}
+</div>`;
+  }
+  const ic=pi(m.t2[0]);
+  const cTag=m.court?`<span class="ct-t">코트 ${m.court}</span>`:'';
+  return `<div class="mc" id="mc${m.id}">
+  <div class="mc-body">
+    <div class="ts${aW?' win':''}" id="ta${m.id}">
+      <div class="av" style="background:${gc(ia)}">${m.t1[0].charAt(0)}</div>
+      <div><div class="tn">${m.t1[0]}</div><div class="tp">& ${m.t1[1]}</div></div>
+    </div>
+    <div class="vs-c"><span class="vs-t">VS</span>${cTag}</div>
+    <div class="ts r${bW?' win':''}" id="tb${m.id}">
+      <div class="av" style="background:${gc(ic)}">${m.t2[0].charAt(0)}</div>
+      <div><div class="tn">${m.t2[0]}</div><div class="tp">& ${m.t2[1]}</div></div>
+    </div>
+  </div>
+  <div class="sc-row">${scBtns}</div>
+  ${restBar}
+</div>`;
+}
+
+function adj(id,side,d){
+  const sc=S.scores[id];
+  const mx=S.fmt==='6'?6:S.fmt==='21'?21:999;
+  if(side==='a') sc.a=Math.max(0,Math.min(mx,sc.a+d));
+  else sc.b=Math.max(0,Math.min(mx,sc.b+d));
+  const aW=sc.a>sc.b&&(sc.a>0||sc.b>0),bW=sc.b>sc.a&&(sc.a>0||sc.b>0);
+  document.getElementById('sa'+id).textContent=sc.a;
+  document.getElementById('sb'+id).textContent=sc.b;
+  document.getElementById('sa'+id).className='sc-v'+(aW?' win':'');
+  document.getElementById('sb'+id).className='sc-v'+(bW?' win':'');
+  const ta=document.getElementById('ta'+id),tb=document.getElementById('tb'+id);
+  if(ta) ta.className='ts'+(aW?' win':'');
+  if(tb) tb.className='ts r'+(bW?' win':'');
+  upProg();mkStanding();
+}
+
+function upProg(){
+  const tot=S.matches.length,done=Object.values(S.scores).filter(s=>s.a>0||s.b>0).length;
+  const pct=tot?Math.round(done/tot*100):0;
+  document.getElementById('progPct').textContent=pct+'%';
+  document.getElementById('progBr').style.width=pct+'%';
+  document.getElementById('progLbl').textContent=done+' / '+tot+' 경기 완료';
+}
+
+/* ──────────────────────────────────
+   STANDING
+────────────────────────────────── */
+function calcSt(){
+  const st={};S.players.forEach(p=>{st[p]={w:0,l:0,d:0,pf:0,pa:0}});
+  S.matches.forEach(m=>{
+    const sc=S.scores[m.id];if(sc.a===0&&sc.b===0) return;
+    const aW=sc.a>sc.b,bW=sc.b>sc.a;
+    // singles(3명) 또는 복식 모두 처리
+    const teamA=m.singles?[m.t1[0]]:[m.t1[0],m.t1[1]];
+    const teamB=m.singles?[m.t2[0]]:[m.t2[0],m.t2[1]];
+    teamA.forEach(p=>{if(p&&st[p]){st[p].pf+=sc.a;st[p].pa+=sc.b;if(aW)st[p].w++;else if(bW)st[p].l++;else st[p].d++;}});
+    teamB.forEach(p=>{if(p&&st[p]){st[p].pf+=sc.b;st[p].pa+=sc.a;if(bW)st[p].w++;else if(aW)st[p].l++;else st[p].d++;}});
+  });
+  return st;
+}
+
+function mkStanding(){
+  const st=calcSt();
+  const sorted=[...S.players].sort((a,b)=>st[b].w!==st[a].w?st[b].w-st[a].w:(st[b].pf-st[b].pa)-(st[a].pf-st[a].pa));
+  const allDone=S.matches.length>0&&Object.values(S.scores).every(s=>s.a>0||s.b>0);
+  document.getElementById('wBox').innerHTML=allDone&&sorted.length?`
+    <div class="win-banner">
+      <div class="win-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/>
+        </svg>
+      </div>
+      <div><div class="win-lbl">최종 우승자</div><div class="win-name">${sorted[0]}</div></div>
+    </div>`:'';
+  const tb=document.getElementById('stBd');tb.innerHTML='';
+  sorted.forEach((p,rank)=>{
+    const s=st[p];const df=s.pf-s.pa;const tot=s.w+s.l+s.d;
+    const rate=tot>0?Math.round(s.w/tot*100)+'%':'—';
+    const rkEl=rank===0?`<div class="rk rk1">1</div>`:rank===1?`<div class="rk rk2">2</div>`:rank===2?`<div class="rk rk3">3</div>`:`<div class="rk-n">${rank+1}</div>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${rkEl}</td>
+      <td><div class="pc">
+        <div class="av" style="width:34px;height:34px;font-size:14px;background:${gc(pi(p))};border-radius:9px">${p.charAt(0)}</div>
+        <span style="font-size:15px;font-weight:600">${p}</span>
+      </div></td>
+      <td class="td-w">${s.w}</td><td class="td-l">${s.l}</td>
+      <td style="color:var(--tx2)">${s.pf}</td><td style="color:var(--tx2)">${s.pa}</td>
+      <td class="${df>0?'td-p':df<0?'td-n':''}">${df>0?'+'+df:df}</td>
+      <td style="color:var(--tx3);font-weight:600">${rate}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+/* ──────────────────────────────────
+   TAB
+────────────────────────────────── */
+function gTab(name,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('panel'+name).classList.add('on');
+}
+
+/* ──────────────────────────────────
+   PRINT → PDF
+────────────────────────────────── */
+function doPrint(panel){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('print-target'));
+  document.getElementById('panel'+panel).classList.add('print-target');
+  window.print();
+  setTimeout(()=>document.querySelectorAll('.panel').forEach(p=>p.classList.remove('print-target')),1500);
+}
+
+/* INIT */
+mkInputs();
+</script>
+</body>
+</html>
